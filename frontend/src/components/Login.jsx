@@ -1,32 +1,47 @@
-import React from 'react';
-import {Link} from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const Login = () => {
+    const [values, setValues] = useState({
+        email: '',
+        password: ''
+    })
+    const navigate = useNavigate();
+    axios.defaults.withCredentials = true;
+    const handleSubmit = (event) => {
+        event.preventDefault();
+        axios.post('http://localhost:5000/login', values)
+            .then(res => {
+                if (res.data.Status === "Success") { 
+                    navigate('/');
+                } else {
+                    alert(res.data.Error);
+                }
+            })
+            .then(err => console.log(err));
+    }
     return (
         <div className="d-flex justify-content-center align-items-center bg-primary vh-100">
             <div className="bg-light p-4 rounded">
                 <h2 className="text-center">Log In</h2>
-                <form>
+                <form onSubmit={handleSubmit}>
                     <div className="mb-3">
                         <label htmlFor="email"><strong>Email</strong></label>
                         <input type="email" placeholder="Enter your email" name="email"
+                            onChange={e => setValues({ ...values, email: e.target.value })}
                             className="form-control rounded-0" />
                     </div>
+
                     <div className="mb-3">
                         <label htmlFor="password"><strong>Password</strong></label>
-                        <input
-                            type="password"
-                            placeholder="Enter your password"
-                            name="password"
+                        <input type="password" placeholder="Enter your password" name="password"
+                            onChange={e => setValues({ ...values, password: e.target.value })}
                             className="form-control rounded-0"
                         />
                         <div className="form-check mt-2">
-                            <input
-                                className="form-check-input"
-                                type="checkbox"
-                                id="terms"
-                                name="terms"
-                            />
+                            <input className="form-check-input" type="checkbox" id="terms" name="terms" />
                             <label className="form-check-label" htmlFor="terms">
                                 You agree to our <a href="#">terms and conditions</a>.
                             </label>

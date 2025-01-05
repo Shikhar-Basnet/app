@@ -9,9 +9,13 @@ const Login = () => {
 
     const handleSubmit = (event) => {
         event.preventDefault();
-        axios.post('http://localhost:5000/login', values)
+        axios.post('http://localhost:5000/login', values, { withCredentials: true })
             .then(res => {
                 if (res.data.Status === "Success") {
+                    // Store role and auth status in localStorage
+                    localStorage.setItem('role', res.data.role);
+                    localStorage.setItem('authenticated', true);
+
                     // Redirect based on role
                     if (res.data.role === 'admin') {
                         navigate('/admin-dashboard');
@@ -24,11 +28,13 @@ const Login = () => {
             })
             .catch(err => console.log(err));
     };
+
+
     return (
         <div className="d-flex justify-content-center align-items-center bg-primary vh-100">
             <div className="bg-light p-4 rounded">
                 <h2 className="text-center">Log In</h2>
-                <form onSubmit={handleSubmit}>
+                <form onSubmit={handleSubmit} autoComplete='off'>
                     <div className="mb-3">
                         <label htmlFor="email"><strong>Email</strong></label>
                         <input

@@ -42,6 +42,7 @@ const verifyUser = (req, res, next) => {
     }
 };
 
+
 // Middleware to verify roles
 const verifyRole = (role) => (req, res, next) => {
     const token = req.cookies.token;
@@ -61,10 +62,12 @@ const verifyRole = (role) => (req, res, next) => {
     });
 };
 
-// Default route
+// Default route that checks authentication status
 app.get('/', verifyUser, (req, res) => {
     return res.json({ Status: "Success", name: req.name, role: req.role });
 });
+
+
 
 // Admin dashboard route
 app.get('/admin', verifyRole('admin'), (req, res) => {
@@ -118,7 +121,7 @@ app.post('/login', (req, res) => {
     });
 });
 
-// Logout route
+// Logout route in backend
 app.get('/logout', (req, res) => {
     res.clearCookie('token');
     return res.json({ Status: "Success" });

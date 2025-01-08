@@ -69,6 +69,7 @@ app.get('/', verifyUser, (req, res) => {
 
 
 
+
 // Admin dashboard route
 app.get('/admin', verifyRole('admin'), (req, res) => {
     return res.json({ Status: "Success", message: `Welcome Admin ${req.name}` });

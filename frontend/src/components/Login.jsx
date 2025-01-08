@@ -1,20 +1,51 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import {
+    Box,
+    Button,
+    TextField,
+    Typography,
+    Container,
+    Paper,
+    Grid,
+    CircularProgress
+} from '@mui/material';
 
 const Login = () => {
     const [values, setValues] = useState({ email: '', password: '' });
+    const [isLoading, setIsLoading] = useState(false); // State for loading
+    const [error, setError] = useState(''); // State for handling error messages
     const navigate = useNavigate();
     axios.defaults.withCredentials = true;
 
+    // Check if the user is already authenticated when the component mounts
+    useEffect(() => {
+        const authenticated = localStorage.getItem('authenticated');
+        const role = localStorage.getItem('role');
+        
+        if (authenticated === 'true' && role) {
+            // Redirect based on the stored role
+            if (role === 'admin') {
+                navigate('/admin-dashboard');
+            } else if (role === 'user') {
+                navigate('/user-dashboard');
+            }
+        }
+    }, [navigate]);
+
     const handleSubmit = (event) => {
         event.preventDefault();
+        setIsLoading(true); // Set loading to true
+        setError(''); // Reset any previous errors
+
         axios.post('http://localhost:5000/login', values, { withCredentials: true })
-            .then(res => {
+            .then((res) => {
+                setIsLoading(false); // Set loading to false once response is received
                 if (res.data.Status === "Success") {
                     // Store role and auth status in localStorage
                     localStorage.setItem('role', res.data.role);
-                    localStorage.setItem('authenticated', true);
+                    localStorage.setItem('authenticated', 'true');
 
                     // Redirect based on role
                     if (res.data.role === 'admin') {
@@ -23,43 +54,88 @@ const Login = () => {
                         navigate('/user-dashboard');
                     }
                 } else {
-                    alert(res.data.Error);
+                    setError(res.data.Error || 'An error occurred. Please try again.');
                 }
             })
-            .catch(err => console.log(err));
+            .catch((err) => {
+                setIsLoading(false); // Set loading to false if there's an error
+                console.log(err);
+                setError('An error occurred. Please try again later.');
+            });
     };
 
-
     return (
-        <div className="d-flex justify-content-center align-items-center bg-primary vh-100">
-            <div className="bg-light p-4 rounded">
-                <h2 className="text-center">Log In</h2>
-                <form onSubmit={handleSubmit} autoComplete='off'>
-                    <div className="mb-3">
-                        <label htmlFor="email"><strong>Email</strong></label>
-                        <input
+        <Container
+            maxWidth="xs"
+            sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                minHeight: '100vh',
+            }}
+        >
+            <Paper 
+                elevation={3} 
+                sx={{ 
+                    padding: 5, 
+                    borderRadius: 2, 
+                    width: '100%', 
+                    maxWidth: 480 
+                }}
+            >
+                <Typography variant="h4" align="center" gutterBottom>
+                    Log In
+                </Typography>
+                {error && <Typography color="error" variant="body2" align="center" mb={2}>{error}</Typography>}
+                <form onSubmit={handleSubmit} noValidate>
+                    <Box mb={3}>
+                        <TextField
+                            fullWidth
+                            label="Email"
                             type="email"
-                            placeholder="Enter your email"
                             name="email"
-                            onChange={e => setValues({ ...values, email: e.target.value })}
-                            className="form-control rounded-0"
+                            variant="outlined"
+                            value={values.email}
+                            onChange={(e) => setValues({ ...values, email: e.target.value })}
+                            required
                         />
-                    </div>
-                    <div className="mb-3">
-                        <label htmlFor="password"><strong>Password</strong></label>
-                        <input
+                    </Box>
+                    <Box mb={3}>
+                        <TextField
+                            fullWidth
+                            label="Password"
                             type="password"
-                            placeholder="Enter your password"
                             name="password"
-                            onChange={e => setValues({ ...values, password: e.target.value })}
-                            className="form-control rounded-0"
+                            variant="outlined"
+                            value={values.password}
+                            onChange={(e) => setValues({ ...values, password: e.target.value })}
+                            required
                         />
-                    </div>
-                    <button type="submit" className="btn btn-success w-100 rounded-0">Log in</button>
-                    <Link to="/register" className="btn btn-link w-100 mt-2">Create an account?</Link>
+                    </Box>
+                    <Button
+                        type="submit"
+                        size="large"
+                        fullWidth
+                        variant="contained"
+                        color="success"
+                        sx={{ mb: 2 }}
+                        disabled={isLoading} // Disable button when loading
+                        startIcon={isLoading ? <CircularProgress size={20} color="inherit" /> : null} // Show spinner
+                    >
+                        {isLoading ? 'Logging In...' : 'Log In'}
+                    </Button>
+                    <Grid container justifyContent="center">
+                        <Grid item>
+                            <Link to="/register" style={{ textDecoration: 'none' }}>
+                                <Button color="primary" variant="text">
+                                    Create an account?
+                                </Button>
+                            </Link>
+                        </Grid>
+                    </Grid>
                 </form>
-            </div>
-        </div>
+            </Paper>
+        </Container>
     );
 };
 

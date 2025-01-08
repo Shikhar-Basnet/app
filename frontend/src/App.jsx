@@ -8,6 +8,7 @@ import AdminDashboard from './components/AdminDashboard';
 import UserDashboard from './components/UserDashboard';
 import ProtectedRoute from './routes/ProtectedRoute';
 import Navbar from './components/Navbar';
+import AdminProfile from './components/profile/AdminProfile';
 
 function App() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -16,29 +17,32 @@ function App() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        axios.get('http://localhost:5000', { withCredentials: true })
-            .then((res) => {
+        // Check authentication status when app loads
+        const checkAuthStatus = async () => {
+            try {
+                const res = await axios.get('http://localhost:5000', { withCredentials: true });
+
                 if (res.data.Status === 'Success') {
                     setIsAuthenticated(true);
                     setRole(res.data.role);
                     localStorage.setItem('role', res.data.role);
                     localStorage.setItem('authenticated', true);
-                    if (res.data.role === 'admin') {
-                        navigate('/admin-dashboard');
-                    } else if (res.data.role === 'user') {
-                        navigate('/user-dashboard');
-                    }
                 } else {
                     setIsAuthenticated(false);
                     localStorage.setItem('authenticated', false);
+                    navigate('/login'); // Redirect to login if not authenticated
                 }
-            })
-            .catch((err) => {
+            } catch (err) {
+                console.log('Error during authentication check:', err);
                 setIsAuthenticated(false);
                 localStorage.setItem('authenticated', false);
-                console.log(err);
-            })
-            .finally(() => setLoading(false)); // Set loading to false after fetching
+                navigate('/login'); // Redirect to login if error occurs
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        checkAuthStatus();
     }, [navigate]);
 
     const handleLogout = () => {
@@ -65,7 +69,7 @@ function App() {
                     <Route
                         path="/admin-dashboard"
                         element={
-                            <ProtectedRoute isAuthenticated={isAuthenticated}>
+                            <ProtectedRoute isAuthenticated={isAuthenticated} role={role} requiredRole="admin">
                                 <AdminDashboard />
                             </ProtectedRoute>
                         }
@@ -73,8 +77,16 @@ function App() {
                     <Route
                         path="/user-dashboard"
                         element={
-                            <ProtectedRoute isAuthenticated={isAuthenticated}>
+                            <ProtectedRoute isAuthenticated={isAuthenticated} role={role} requiredRole="user">
                                 <UserDashboard />
+                            </ProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/admin-profile"
+                        element={
+                            <ProtectedRoute isAuthenticated={isAuthenticated} role={role} requiredRole="admin">
+                                <AdminProfile />
                             </ProtectedRoute>
                         }
                     />

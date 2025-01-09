@@ -42,7 +42,6 @@ const verifyUser = (req, res, next) => {
     }
 };
 
-
 // Middleware to verify roles
 const verifyRole = (role) => (req, res, next) => {
     const token = req.cookies.token;
@@ -67,13 +66,62 @@ app.get('/', verifyUser, (req, res) => {
     return res.json({ Status: "Success", name: req.name, role: req.role });
 });
 
-
-
-
 // Admin dashboard route
 app.get('/admin', verifyRole('admin'), (req, res) => {
-    return res.json({ Status: "Success", message: `Welcome Admin ${req.name}` });
+    return res.json({ Status: "Success", message: `Welcome! Dear ${req.name}` });
 });
+
+// Admin statistics route: Fetch total users, active users, new registrations, and monthly registration data
+app.get('/admin/stats', verifyRole('admin'), (req, res) => {
+    const sqlTotalUsers = "SELECT COUNT(*) AS total_users FROM login";
+    const sqlActiveUsers = "SELECT COUNT(*) AS active_users FROM login WHERE status = 'active'"; // Assuming 'status' field exists for user status
+    const sqlNewRegistrations = "SELECT COUNT(*) AS new_registrations FROM login WHERE registration_date > DATE_SUB(NOW(), INTERVAL 1 MONTH)"; // Assuming `registration_date` exists
+
+    // SQL query for monthly registration data
+    const sqlMonthlyRegistrations = `
+        SELECT MONTH(registration_date) AS month, COUNT(*) AS registrations
+        FROM login
+        WHERE registration_date > DATE_SUB(NOW(), INTERVAL 6 MONTH)
+        GROUP BY MONTH(registration_date)
+        ORDER BY MONTH(registration_date)
+    `;
+
+    // Get total users
+    db.query(sqlTotalUsers, (err, totalUsersData) => {
+        if (err) return res.json({ Error: "Error fetching total users!" });
+        
+        // Get active users
+        db.query(sqlActiveUsers, (err, activeUsersData) => {
+            if (err) return res.json({ Error: "Error fetching active users!" });
+
+            // Get new registrations
+            db.query(sqlNewRegistrations, (err, newRegistrationsData) => {
+                if (err) return res.json({ Error: "Error fetching new registrations!" });
+
+                // Get monthly registrations data
+                db.query(sqlMonthlyRegistrations, (err, monthlyRegistrationsData) => {
+                    if (err) return res.json({ Error: "Error fetching monthly registrations!" });
+
+                    // Prepare monthly registrations data
+                    const monthlyRegistrations = [0, 0, 0, 0, 0, 0]; // Default to 6 months of 0 registrations
+                    monthlyRegistrationsData.forEach(row => {
+                        monthlyRegistrations[row.month - 1] = row.registrations; // Adjust for 0-indexed array
+                    });
+
+                    // Return all statistics including monthly registration data
+                    return res.json({
+                        Status: "Success",
+                        totalUsers: totalUsersData[0].total_users,
+                        activeUsers: activeUsersData[0].active_users,
+                        newRegistrations: newRegistrationsData[0].new_registrations,
+                        monthlyRegistrations: monthlyRegistrations
+                    });
+                });
+            });
+        });
+    });
+});
+
 
 // User dashboard route
 app.get('/user', verifyRole('user'), (req, res) => {

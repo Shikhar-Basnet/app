@@ -8,13 +8,23 @@ import AdminDashboard from './components/AdminDashboard';
 import UserDashboard from './components/UserDashboard';
 import ProtectedRoute from './routes/ProtectedRoute';
 import Navbar from './components/Navbar';
+import { ThemeProvider, CssBaseline, CircularProgress, Box } from '@mui/material';
+import { lightTheme, darkTheme } from './components/Theme';
 import AdminProfile from './components/profile/AdminProfile';
 
 function App() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [role, setRole] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [isDarkMode, setIsDarkMode] = useState(false);
     const navigate = useNavigate();
+
+    // Function to toggle dark mode
+    const toggleDarkMode = () => {
+        setIsDarkMode((prevMode) => !prevMode);
+        const newMode = !isDarkMode ? 'dark-mode' : 'light-mode';
+        localStorage.setItem('mode', newMode);
+    };
 
     useEffect(() => {
         // Check authentication status when app loads
@@ -30,7 +40,6 @@ function App() {
                 } else {
                     setIsAuthenticated(false);
                     localStorage.setItem('authenticated', false);
-                    navigate('/login'); // Redirect to login if not authenticated
                 }
             } catch (err) {
                 console.log('Error during authentication check:', err);
@@ -54,13 +63,36 @@ function App() {
 
     return (
         <>
-            <Navbar isAuthenticated={isAuthenticated} handleLogout={handleLogout} />
-            {loading ? (
-                <div className="d-flex justify-content-center align-items-center vh-100">
-                    <div className="spinner-border" role="status">
-                    </div>
-                </div>
-            ) : (
+            <ThemeProvider theme={isDarkMode ? darkTheme : lightTheme}>
+                <CssBaseline />
+                <Navbar
+                    isAuthenticated={isAuthenticated}
+                    handleLogout={handleLogout}
+                    isDarkMode={isDarkMode}
+                    toggleDarkMode={toggleDarkMode}
+                />
+
+                {loading && (
+                    <Box
+                        sx={{
+                            position: 'fixed',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
+                            backgroundColor: 'rgba(255, 255, 255, 0.77)',
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            zIndex: 9999,
+                        }}
+                    >
+                        <CircularProgress size={40} />
+                    </Box>
+                )}
+
+                {/* Main content: Add padding to ensure content is not hidden */}
+                <Box sx={{ marginTop: '64px' }}>
                 <Routes>
                     <Route path="/" element={<Home />} />
                     <Route path="/register" element={<Register />} />
@@ -91,7 +123,8 @@ function App() {
                         }
                     />
                 </Routes>
-            )}
+                </Box>
+            </ThemeProvider>
         </>
     );
 }

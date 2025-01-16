@@ -40,14 +40,39 @@ export const login = (req, res) => {
         }
     });
 };
+/////////////////////////////////////////
+export const checkAuth = (req, res) => {
+    const token = req.cookies.token;
+    if (!token) {
+        return res.status(401).json({ Status: 'Error', message: 'Unauthorized: No token provided.' });
+    }
+
+    jwt.verify(token, 'jwt-secret-key', (err, decoded) => {
+        if (err) {
+            return res.status(401).json({ Status: 'Error', message: 'Unauthorized: Invalid token.' });
+        }
+
+        return res.json({ Status: 'Success', name: decoded.name, role: decoded.role });
+    });
+};
+////////////////////////////////////////////
+// authController.js
+
 
 export const logout = (req, res) => {
     const token = req.cookies.token;
-    
+
     if (!token) {
-        return res.json({ Status: "Error", message: "No active session found." });
+        // No active session, but treat it as a success to ensure the user is logged out
+        return res.status(200).json({ 
+            Status: "Success", 
+            message: "No active session, but logout processed." 
+        });
     }
 
-    res.clearCookie('token');
-    return res.json({ Status: "Success" });
+    res.clearCookie('token', { httpOnly: true, secure: true });
+    return res.status(200).json({ 
+        Status: "Success", 
+        message: "Logged out successfully." 
+    });
 };

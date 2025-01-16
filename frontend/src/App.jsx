@@ -108,19 +108,11 @@ function App() {
     }
   }, []);
 
-  const handleLogout = () => {
-    setAuthData({ isAuthenticated: false, role: null });
-    localStorage.setItem('authenticated', 'false');
-    localStorage.removeItem('role');
-    navigate('/');
-  };
-
   return (
     <ThemeProvider theme={isDarkMode === null ? lightTheme : isDarkMode ? darkTheme : lightTheme}>
       <CssBaseline />
       <Navbar
         isAuthenticated={isAuthenticated}
-        handleLogout={handleLogout}
         isDarkMode={isDarkMode}
         toggleDarkMode={toggleDarkMode}
       />

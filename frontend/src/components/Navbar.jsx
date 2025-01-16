@@ -24,8 +24,11 @@ const Navbar = ({ isDarkMode, toggleDarkMode, isAuthenticated }) => {
             .get('http://localhost:5000/auth/logout', { withCredentials: true })
             .then(() => navigate('/login'))
             .catch((err) => console.error('Logout error:', err));
+            window.location.reload();
         setSidebarOpen(false);
     };
+    
+
 
     const handleLinkClick = (path) => {
         // Prevent navigation to home for authenticated users
@@ -93,7 +96,7 @@ const Navbar = ({ isDarkMode, toggleDarkMode, isAuthenticated }) => {
                         </IconButton>
                     )}
                     <Typography variant="h5" component="div">
-                        <MuiLink href="/" color="inherit" underline="none" sx={{ fontWeight: 'bold' }}>
+                        <MuiLink href="" color="inherit" underline="none" sx={{ fontWeight: 'bold' }}>
                             Shikhar.
                         </MuiLink>
                     </Typography>
@@ -125,7 +128,7 @@ const Navbar = ({ isDarkMode, toggleDarkMode, isAuthenticated }) => {
                         !isSmallScreen && (
                             <>
                                 <Button
-                                    color="primary"
+                                    color="warning"
                                     variant="contained"
                                     component={Link}
                                     to="/login"
